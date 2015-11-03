@@ -243,7 +243,7 @@ class ProductLedgerReport(ReportMixin):
             ('effective_date', '<=', data['end_date']),
             ('product', '=', product_id),
             ('state', '=', 'done'),
-            ('from_location.type', '=', 'customer'),
+            ('to_location.type', '=', 'customer'),
         ], order=[('effective_date', 'asc')])
 
     @classmethod
@@ -282,17 +282,20 @@ class ProductLedgerReport(ReportMixin):
 
     @classmethod
     def get_summary(cls, record, data):
+        Product = Pool().get('product.product')
+
         rv = {}
+        product = record['product']
         with Transaction().set_context(
             locations=data['warehouses'],
             stock_date_end=data['start_date'] - relativedelta(days=1)
         ):
-            rv['opening_stock'] = record['product'].quantity
+            rv['opening_stock'] = Product(product.id).quantity
 
         with Transaction().set_context(
             locations=data['warehouses'], stock_date_end=data['end_date']
         ):
-            rv['closing_stock'] = record['product'].quantity
+            rv['closing_stock'] = Product(product.id).quantity
 
         rv['purchased'] = cls._get_total_quantity(record['purchases'])
         rv['produced'] = cls._get_total_quantity(record['productions'])
